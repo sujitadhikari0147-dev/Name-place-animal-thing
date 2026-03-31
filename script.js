@@ -1,13 +1,11 @@
 const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const categories = ["Name", "Place", "Animal", "Thing"];
 
 let partyCode = "";
 let players = [];
 let turnIndex = 0;
 let selectedLetter = "";
-let answers = {};
-let scores = {};
-let myName = "";
+let currentRound = null;
+let rounds = [];
 
 function generateCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -19,41 +17,37 @@ function generateCode() {
 }
 
 function createParty() {
-  const nameInput = document.getElementById("playerName");
-  const name = nameInput.value.trim();
-
+  const name = document.getElementById("playerName").value.trim();
   if (!name) {
-    alert("Enter your name first");
+    alert("Enter your name");
     return;
   }
 
-  myName = name;
   partyCode = generateCode();
-  players = [{ name, score: 0 }];
-  scores = {};
-  scores[name] = 0;
-  answers = {};
+  players = [{ name, total: 0 }];
   turnIndex = 0;
   selectedLetter = "";
+  currentRound = null;
+  rounds = [];
 
   showGame();
 }
 
 function joinParty() {
   const name = document.getElementById("playerName").value.trim();
-  const code = document.getElementById("joinCode").value.trim().toUpperCase();
-
-  if (!name || !code) {
-    alert("Enter your name and party code");
+  if (!name) {
+    alert("Enter your name");
     return;
   }
 
-  myName = name;
-  partyCode = code;
+  if (!partyCode) {
+    partyCode = prompt("Enter party code")?.trim().toUpperCase() || "";
+  }
+
+  if (!partyCode) return;
 
   if (!players.find((p) => p.name === name)) {
-    players.push({ name, score: 0 });
-    scores[name] = 0;
+    players.push({ name, total: 0 });
   }
 
   showGame();
@@ -63,68 +57,61 @@ function showGame() {
   document.getElementById("homeScreen").classList.add("hidden");
   document.getElementById("gameScreen").classList.remove("hidden");
   document.getElementById("partyCode").textContent = partyCode;
+  renderTurn();
   renderLetters();
-  renderPlayers();
   renderTable();
-  updateTurnText();
+  renderHistory();
 }
 
-function copyCode() {
-  navigator.clipboard.writeText(partyCode);
-  alert("Party code copied");
-}
-
-function addDemoPlayer() {
-  const demoName = `Player${players.length + 1}`;
-  players.push({ name: demoName, score: 0 });
-  scores[demoName] = 0;
-  renderPlayers();
-  renderTable();
-  updateTurnText();
+function renderTurn() {
+  if (!players.length) {
+    document.getElementById("turnText").textContent = "-";
+    return;
+  }
+  document.getElementById("turnText").textContent = players[turnIndex].name;
 }
 
 function renderLetters() {
-  const lettersDiv = document.getElementById("letters");
-  lettersDiv.innerHTML = "";
+  const box = document.getElementById("letters");
+  box.innerHTML = "";
 
   letters.forEach((letter) => {
     const btn = document.createElement("button");
     btn.textContent = letter;
-    btn.className = "letter-btn";
-    if (selectedLetter === letter) {
-      btn.classList.add("selected");
-    }
+    if (selectedLetter === letter) btn.classList.add("active");
 
     btn.onclick = () => {
+      if (currentRound && currentRound.active) return;
       selectedLetter = letter;
-      document.getElementById("selectedLetter").textContent = selectedLetter;
+      document.getElementById("selectedLetter").textContent = letter;
       renderLetters();
     };
 
-    lettersDiv.appendChild(btn);
+    box.appendChild(btn);
   });
 }
 
-function renderPlayers() {
-  const playersList = document.getElementById("playersList");
-  playersList.innerHTML = "";
+function buildRound() {
+  const rows = {};
 
-  players.forEach((player, index) => {
-    const div = document.createElement("div");
-    const turnMark = index === turnIndex ? " ← current turn" : "";
-    div.textContent = `${player.name} — ${player.score} points${turnMark}`;
-    playersList.appendChild(div);
+  players.forEach((player) => {
+    rows[player.name] = {
+      name: "",
+      place: "",
+      animal: "",
+      things: "",
+      points: ""
+    };
   });
-}
 
-function updateTurnText() {
-  if (!players.length) {
-    document.getElementById("turnText").textContent = "No players yet";
-    return;
-  }
-
-  document.getElementById("turnText").textContent =
-    `${players[turnIndex].name}'s turn to choose a letter`;
+  return {
+    number: rounds.length + 1,
+    chosenBy: players[turnIndex].name,
+    letter: selectedLetter,
+    active: true,
+    stoppedBy: "",
+    rows
+  };
 }
 
 function startRound() {
@@ -133,123 +120,158 @@ function startRound() {
     return;
   }
 
-  answers = {};
-
-  players.forEach((player) => {
-    answers[player.name] = {
-      Name: "",
-      Place: "",
-      Animal: "",
-      Thing: ""
-    };
-  });
-
-  renderTable();
-}
-
-function renderTable() {
-  const tbody = document.getElementById("gameTableBody");
-  tbody.innerHTML = "";
-
-  players.forEach((player) => {
-    const tr = document.createElement("tr");
-
-    let rowHtml = `<td>${player.name}</td>`;
-
-    categories.forEach((category) => {
-      const value = answers[player.name]?.[category] || "";
-      rowHtml += `
-        <td>
-          <input
-            value="${value}"
-            placeholder="${category} with ${selectedLetter || "_"}"
-            oninput="updateAnswer('${player.name}', '${category}', this.value)"
-          />
-        </td>
-      `;
-    });
-
-    rowHtml += `<td class="score">${player.score}</td>`;
-    tr.innerHTML = rowHtml;
-    tbody.appendChild(tr);
-  });
-}
-
-function updateAnswer(playerName, category, value) {
-  if (!answers[playerName]) {
-    answers[playerName] = {
-      Name: "",
-      Place: "",
-      Animal: "",
-      Thing: ""
-    };
-  }
-
-  answers[playerName][category] = value;
-}
-
-function finishRound() {
-  if (!selectedLetter) {
-    alert("Choose a letter first");
+  if (currentRound && currentRound.active) {
+    alert("Round is already active");
     return;
   }
 
+  currentRound = buildRound();
+  renderTable();
+}
+
+function stopRound() {
+  if (!currentRound || !currentRound.active) {
+    alert("No active round");
+    return;
+  }
+
+  currentRound.active = false;
+  currentRound.stoppedBy = "Player";
+
   players.forEach((player) => {
-    let roundPoints = 0;
-    const playerAnswers = answers[player.name] || {};
-
-    categories.forEach((category) => {
-      const value = (playerAnswers[category] || "").trim();
-
-      if (value && value[0].toUpperCase() === selectedLetter) {
-        roundPoints += 10;
-      }
-    });
-
-    player.score += roundPoints;
-    scores[player.name] = player.score;
+    const pts = parseInt(currentRound.rows[player.name].points, 10);
+    if (!isNaN(pts)) {
+      player.total += pts;
+    }
   });
 
+  rounds.push(currentRound);
+  currentRound = null;
   turnIndex = (turnIndex + 1) % players.length;
   selectedLetter = "";
   document.getElementById("selectedLetter").textContent = "-";
 
+  renderTurn();
   renderLetters();
-  renderPlayers();
   renderTable();
-  updateTurnText();
-}
-.round-block {
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 18px;
-  background: #ffffff;
+  renderHistory();
 }
 
-.round-title {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 10px;
+function addDemoPlayer() {
+  const demoName = `Player${players.length + 1}`;
+  players.push({ name: demoName, total: 0 });
+
+  if (currentRound) {
+    currentRound.rows[demoName] = {
+      name: "",
+      place: "",
+      animal: "",
+      things: "",
+      points: ""
+    };
+  }
+
+  renderTurn();
+  renderTable();
+  renderHistory();
 }
 
-.small-note {
-  font-size: 13px;
-  color: #6b7280;
-  margin-bottom: 12px;
+function updateCell(playerName, field, value) {
+  if (!currentRound || !currentRound.active) return;
+  currentRound.rows[playerName][field] = value;
 }
 
-.points-input {
-  width: 80px;
+function renderTable() {
+  const body = document.getElementById("gameTableBody");
+  body.innerHTML = "";
+
+  players.forEach((player) => {
+    const tr = document.createElement("tr");
+
+    const row = currentRound
+      ? currentRound.rows[player.name]
+      : { name: "", place: "", animal: "", things: "", points: "" };
+
+    const disabled = currentRound && currentRound.active ? "" : "disabled";
+
+    tr.innerHTML = `
+      <td>${escapeHtml(player.name)}</td>
+      <td><input ${disabled} value="${escapeHtml(row.name)}" oninput="updateCell('${jsSafe(player.name)}','name',this.value)" /></td>
+      <td><input ${disabled} value="${escapeHtml(row.place)}" oninput="updateCell('${jsSafe(player.name)}','place',this.value)" /></td>
+      <td><input ${disabled} value="${escapeHtml(row.animal)}" oninput="updateCell('${jsSafe(player.name)}','animal',this.value)" /></td>
+      <td><input ${disabled} value="${escapeHtml(row.things)}" oninput="updateCell('${jsSafe(player.name)}','things',this.value)" /></td>
+      <td><input ${disabled} value="${escapeHtml(row.points)}" oninput="updateCell('${jsSafe(player.name)}','points',this.value)" /></td>
+    `;
+
+    body.appendChild(tr);
+  });
 }
 
-.stopped-banner {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #fee2e2;
-  color: #991b1b;
-  font-size: 13px;
-  font-weight: bold;
-  margin-bottom: 12px;
+function renderHistory() {
+  const box = document.getElementById("roundHistory");
+
+  if (!rounds.length) {
+    box.innerHTML = "";
+    return;
+  }
+
+  box.innerHTML = rounds
+    .map((round) => {
+      const rowsHtml = players
+        .map((player) => {
+          const row = round.rows[player.name] || {
+            name: "",
+            place: "",
+            animal: "",
+            things: "",
+            points: ""
+          };
+
+          return `
+            <tr>
+              <td>${escapeHtml(player.name)}</td>
+              <td>${escapeHtml(row.name)}</td>
+              <td>${escapeHtml(row.place)}</td>
+              <td>${escapeHtml(row.animal)}</td>
+              <td>${escapeHtml(row.things)}</td>
+              <td>${escapeHtml(row.points)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+
+      return `
+        <div class="round-card">
+          <div class="round-title">Round ${round.number} — Letter ${escapeHtml(round.letter)}</div>
+          <div class="round-note">Chosen by ${escapeHtml(round.chosenBy)}</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Name</th>
+                <th>Place</th>
+                <th>Animal</th>
+                <th>Things</th>
+                <th>Points</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function jsSafe(value) {
+  return String(value).replaceAll("'", "\\'");
 }
