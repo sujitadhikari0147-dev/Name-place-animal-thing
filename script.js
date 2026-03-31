@@ -219,3 +219,37 @@ function finishRound() {
   renderTable();
   updateTurnText();
 }
+.round-block {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  background: #ffffff;
+}
+
+.round-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.small-note {
+  font-size: 13px;
+  color: #6b7280;
+  margin-bottom: 12px;
+}
+
+.points-input {
+  width: 80px;
+}
+
+.stopped-banner {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
