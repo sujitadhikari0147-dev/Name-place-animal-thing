@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Name Place Animal Things</title>
+    <title>Name Place Animal Thing</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -45,27 +45,21 @@
           <p id="turnText"></p>
           <p>Selected Letter: <strong id="selectedLetter">-</strong></p>
           <div id="letters" class="letters"></div>
+
           <div class="row" style="margin-top: 16px;">
             <button onclick="startRound()">Start Round</button>
-            <button class="secondary" onclick="finishRound()">Finish Round</button>
+            <button onclick="stopRound()">Stop Round</button>
           </div>
         </div>
 
         <div class="card">
-          <h3>Game Table</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Player</th>
-                <th>Name</th>
-                <th>Place</th>
-                <th>Animal</th>
-                <th>Thing</th>
-                <th>Points</th>
-              </tr>
-            </thead>
-            <tbody id="gameTableBody"></tbody>
-          </table>
+          <h3>Current Round</h3>
+          <div id="currentRoundArea"></div>
+        </div>
+
+        <div class="card">
+          <h3>All Rounds</h3>
+          <div id="roundHistory"></div>
         </div>
       </div>
     </div>
