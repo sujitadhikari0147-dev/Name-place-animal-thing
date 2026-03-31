@@ -1,387 +1,195 @@
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-const categories = ["Name", "Place", "Animal", "Thing"];
-
-let partyCode = "";
-let players = [];
-let turnIndex = 0;
-let selectedLetter = "";
-let roundActive = false;
-let currentRound = null;
-let rounds = [];
-
-function generateCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "";
-  for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return code;
+* {
+  box-sizing: border-box;
 }
 
-function createParty() {
-  const name = document.getElementById("playerName").value.trim();
-
-  if (!name) {
-    alert("Enter your name first");
-    return;
-  }
-
-  partyCode = generateCode();
-  players = [{ name, totalScore: 0 }];
-  turnIndex = 0;
-  selectedLetter = "";
-  roundActive = false;
-  currentRound = null;
-  rounds = [];
-
-  showGame();
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f4f6;
+  color: #111827;
 }
 
-function joinParty() {
-  const name = document.getElementById("playerName").value.trim();
-  const code = document.getElementById("joinCode").value.trim().toUpperCase();
-
-  if (!name || !code) {
-    alert("Enter your name and party code");
-    return;
-  }
-
-  partyCode = code;
-
-  if (!players.find((p) => p.name === name)) {
-    players.push({ name, totalScore: 0 });
-  }
-
-  showGame();
+.hidden {
+  display: none;
 }
 
-function showGame() {
-  document.getElementById("homeScreen").classList.add("hidden");
-  document.getElementById("gameScreen").classList.remove("hidden");
-  document.getElementById("partyCode").textContent = partyCode;
-
-  renderLetters();
-  renderPlayers();
-  updateTurnText();
-  renderCurrentRound();
-  renderRoundHistory();
+.page {
+  min-height: 100vh;
+  padding: 24px;
 }
 
-function copyCode() {
-  navigator.clipboard.writeText(partyCode);
-  alert("Party code copied");
+.home-screen {
+  min-height: calc(100vh - 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-function addDemoPlayer() {
-  const demoName = `Player${players.length + 1}`;
-  players.push({ name: demoName, totalScore: 0 });
-  renderPlayers();
-  updateTurnText();
-  renderCurrentRound();
-  renderRoundHistory();
+.home-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-function renderLetters() {
-  const lettersDiv = document.getElementById("letters");
-  lettersDiv.innerHTML = "";
-
-  letters.forEach((letter) => {
-    const btn = document.createElement("button");
-    btn.textContent = letter;
-    btn.className = "letter-btn";
-    if (selectedLetter === letter) {
-      btn.classList.add("selected");
-    }
-
-    btn.onclick = () => {
-      if (roundActive) return;
-      selectedLetter = letter;
-      document.getElementById("selectedLetter").textContent = selectedLetter;
-      renderLetters();
-    };
-
-    lettersDiv.appendChild(btn);
-  });
+.home-card h1 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 30px;
 }
 
-function renderPlayers() {
-  const playersList = document.getElementById("playersList");
-  playersList.innerHTML = "";
-
-  players.forEach((player, index) => {
-    const div = document.createElement("div");
-    const turnMark = index === turnIndex ? " ← current turn" : "";
-    div.textContent = `${player.name} — Total: ${player.totalScore}${turnMark}`;
-    playersList.appendChild(div);
-  });
+.home-card input {
+  width: 100%;
+  padding: 14px;
+  font-size: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  margin-bottom: 16px;
 }
 
-function updateTurnText() {
-  const turnText = document.getElementById("turnText");
-
-  if (!players.length) {
-    turnText.textContent = "No players yet";
-    return;
-  }
-
-  turnText.textContent = `${players[turnIndex].name}'s turn to choose a letter`;
+.home-buttons {
+  display: flex;
+  gap: 12px;
 }
 
-function buildEmptyRound() {
-  const playerData = {};
-
-  players.forEach((player) => {
-    playerData[player.name] = {
-      Name: "",
-      Place: "",
-      Animal: "",
-      Thing: "",
-      points: ""
-    };
-  });
-
-  return {
-    roundNumber: rounds.length + 1,
-    chosenBy: players[turnIndex].name,
-    letter: selectedLetter,
-    stopped: false,
-    stoppedBy: "",
-    playerData
-  };
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #111827;
+  color: white;
 }
 
-function startRound() {
-  if (!selectedLetter) {
-    alert("Choose a letter first");
-    return;
-  }
-
-  if (roundActive) {
-    alert("Round already active");
-    return;
-  }
-
-  currentRound = buildEmptyRound();
-  roundActive = true;
-
-  renderCurrentRound();
+button.secondary {
+  background: #e5e7eb;
+  color: #111827;
 }
 
-function stopRound() {
-  if (!roundActive || !currentRound) {
-    alert("No active round");
-    return;
-  }
-
-  const stopper = document.getElementById("playerName").value.trim() || "A player";
-
-  currentRound.stopped = true;
-  currentRound.stoppedBy = stopper;
-  roundActive = false;
-
-  applyRoundPointsToTotals(currentRound);
-  rounds.push(currentRound);
-  currentRound = null;
-
-  turnIndex = (turnIndex + 1) % players.length;
-  selectedLetter = "";
-  document.getElementById("selectedLetter").textContent = "-";
-
-  renderLetters();
-  renderPlayers();
-  updateTurnText();
-  renderCurrentRound();
-  renderRoundHistory();
+.game-screen {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-function applyRoundPointsToTotals(round) {
-  players.forEach((player) => {
-    const raw = round.playerData[player.name]?.points || "";
-    const value = parseInt(raw, 10);
-
-    if (!isNaN(value)) {
-      player.totalScore += value;
-    }
-  });
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  background: white;
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
-function updateCurrentAnswer(playerName, category, value) {
-  if (!currentRound || !roundActive) return;
-  currentRound.playerData[playerName][category] = value;
+.label {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-function updateCurrentPoints(playerName, value) {
-  if (!currentRound) return;
-  currentRound.playerData[playerName].points = value;
+.party-code,
+.turn-text {
+  font-size: 24px;
+  font-weight: bold;
 }
 
-function renderCurrentRound() {
-  const area = document.getElementById("currentRoundArea");
-
-  if (!currentRound) {
-    area.innerHTML = `<p class="notice">No active round yet. Choose a letter and start a round.</p>`;
-    return;
-  }
-
-  let html = `
-    <div class="round-block">
-      <div class="round-title">
-        Round ${currentRound.roundNumber} — Letter ${currentRound.letter}
-      </div>
-      <div class="small-note">
-        Chosen by ${currentRound.chosenBy}
-      </div>
-  `;
-
-  if (currentRound.stopped) {
-    html += `<div class="stopped-banner">Stopped by ${currentRound.stoppedBy}</div>`;
-  }
-
-  html += `
-      <table>
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Name</th>
-            <th>Place</th>
-            <th>Animal</th>
-            <th>Thing</th>
-            <th>Points</th>
-          </tr>
-        </thead>
-        <tbody>
-  `;
-
-  players.forEach((player) => {
-    const row = currentRound.playerData[player.name];
-
-    html += `
-      <tr>
-        <td>${player.name}</td>
-        <td>
-          <input
-            value="${escapeHtml(row.Name)}"
-            ${roundActive ? "" : "disabled"}
-            oninput="updateCurrentAnswer('${jsSafe(player.name)}', 'Name', this.value)"
-          />
-        </td>
-        <td>
-          <input
-            value="${escapeHtml(row.Place)}"
-            ${roundActive ? "" : "disabled"}
-            oninput="updateCurrentAnswer('${jsSafe(player.name)}', 'Place', this.value)"
-          />
-        </td>
-        <td>
-          <input
-            value="${escapeHtml(row.Animal)}"
-            ${roundActive ? "" : "disabled"}
-            oninput="updateCurrentAnswer('${jsSafe(player.name)}', 'Animal', this.value)"
-          />
-        </td>
-        <td>
-          <input
-            value="${escapeHtml(row.Thing)}"
-            ${roundActive ? "" : "disabled"}
-            oninput="updateCurrentAnswer('${jsSafe(player.name)}', 'Thing', this.value)"
-          />
-        </td>
-        <td>
-          <input
-            class="points-input"
-            value="${escapeHtml(row.points)}"
-            oninput="updateCurrentPoints('${jsSafe(player.name)}', this.value)"
-          />
-        </td>
-      </tr>
-    `;
-  });
-
-  html += `
-        </tbody>
-      </table>
-    </div>
-  `;
-
-  area.innerHTML = html;
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  background: white;
+  border-radius: 18px;
+  padding: 16px 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
-function renderRoundHistory() {
-  const history = document.getElementById("roundHistory");
-
-  if (rounds.length === 0) {
-    history.innerHTML = `<p class="notice">No finished rounds yet.</p>`;
-    return;
-  }
-
-  let html = "";
-
-  rounds.forEach((round) => {
-    html += `
-      <div class="round-block">
-        <div class="round-title">
-          Round ${round.roundNumber} — Letter ${round.letter}
-        </div>
-        <div class="small-note">
-          Chosen by ${round.chosenBy}
-        </div>
-        <div class="stopped-banner">
-          Stopped by ${round.stoppedBy || "Unknown"}
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Player</th>
-              <th>Name</th>
-              <th>Place</th>
-              <th>Animal</th>
-              <th>Thing</th>
-              <th>Points</th>
-            </tr>
-          </thead>
-          <tbody>
-    `;
-
-    players.forEach((player) => {
-      const row = round.playerData[player.name] || {
-        Name: "",
-        Place: "",
-        Animal: "",
-        Thing: "",
-        points: ""
-      };
-
-      html += `
-        <tr>
-          <td>${player.name}</td>
-          <td>${escapeHtml(row.Name)}</td>
-          <td>${escapeHtml(row.Place)}</td>
-          <td>${escapeHtml(row.Animal)}</td>
-          <td>${escapeHtml(row.Thing)}</td>
-          <td class="score">${escapeHtml(row.points)}</td>
-        </tr>
-      `;
-    });
-
-    html += `
-          </tbody>
-        </table>
-      </div>
-    `;
-  });
-
-  history.innerHTML = html;
+.letter-box {
+  font-size: 18px;
+  margin-right: 8px;
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+.table-card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
 }
 
-function jsSafe(value) {
-  return String(value).replaceAll("'", "\\'");
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 12px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  font-size: 14px;
+  background: #f9fafb;
+}
+
+td input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+}
+
+.letters {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: repeat(13, 1fr);
+  gap: 8px;
+}
+
+.letters button {
+  background: white;
+  color: #111827;
+  border: 1px solid #d1d5db;
+}
+
+.letters button.active {
+  background: #111827;
+  color: white;
+}
+
+.history-section {
+  margin-top: 28px;
+}
+
+.history-section h2 {
+  margin-bottom: 14px;
+}
+
+.round-card {
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  margin-bottom: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
+}
+
+.round-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.round-note {
+  color: #6b7280;
+  margin-bottom: 14px;
 }
