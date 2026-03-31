@@ -1,9 +1,75 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Name Place Animal Things</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>Game coming soon 🚀</h1>
+    <div class="container">
+      <div id="homeScreen">
+        <h1>Name, Place, Animal, Thing</h1>
+        <p class="notice">Create a party or join with a party code.</p>
+
+        <div class="card">
+          <div class="row">
+            <input id="playerName" placeholder="Enter your name" />
+          </div>
+
+          <div class="row">
+            <button onclick="createParty()">Create Party</button>
+            <input id="joinCode" placeholder="Enter party code" />
+            <button class="secondary" onclick="joinParty()">Join Party</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="gameScreen" class="hidden">
+        <div class="card">
+          <h2>Party Lobby</h2>
+          <p>Party Code: <span id="partyCode" class="code"></span></p>
+          <div class="row">
+            <button onclick="copyCode()">Copy Code</button>
+            <button class="secondary" onclick="addDemoPlayer()">Add Demo Player</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Players</h3>
+          <div id="playersList" class="player-list"></div>
+        </div>
+
+        <div class="card">
+          <h3>Turn</h3>
+          <p id="turnText"></p>
+          <p>Selected Letter: <strong id="selectedLetter">-</strong></p>
+          <div id="letters" class="letters"></div>
+          <div class="row" style="margin-top: 16px;">
+            <button onclick="startRound()">Start Round</button>
+            <button class="secondary" onclick="finishRound()">Finish Round</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Game Table</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Name</th>
+                <th>Place</th>
+                <th>Animal</th>
+                <th>Thing</th>
+                <th>Points</th>
+              </tr>
+            </thead>
+            <tbody id="gameTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
   </body>
 </html>
